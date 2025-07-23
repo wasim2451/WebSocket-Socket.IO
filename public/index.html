@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SocketLab: Echo Server</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        #messages { border: 1px solid #ccc; padding: 10px; min-height: 150px; margin-bottom: 10px; overflow-y: scroll; }
+        input[type="text"] { width: 300px; padding: 8px; }
+        button { padding: 8px 15px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>Echo Server Demo</h1>
+    <div id="messages"></div>
+    <input type="text" id="messageInput" placeholder="Type a message...">
+    <button id="sendButton">Send</button>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        // Connect to the Socket.IO Server
+        const socket=io();
+        const messageInput=document.getElementById('messageInput');
+        const sendButton=document.getElementById('sendButton');
+        const messageDiv=document.getElementById('messages');
+
+        function appendMessage(message,type){
+            const p=document.createElement('p');
+            p.textContent=message;
+            let color=type==='sent'?'blue':'green';
+            p.style.color=color;
+            messageDiv.appendChild(p);
+        }
+
+        socket.on('connect',()=>{
+            appendMessage('Connected to the Server','info');
+            console.log('Socket.IO connected ');
+        });
+        socket.on('disconnect',()=>{
+            appendMessage('Disconnected from Server','info');
+            console.log('Socket.IO disconnected ');
+            
+        });
+        socket.on('connect_error',(err)=>{
+            appendMessage(`Connection Error ${err.message}`,'error');
+            console.error('Socket.IO Error ',err);
+        });
+
+        socket.on('echo',(data)=>{
+            appendMessage(data,'received');
+            console.log("Received from Server",data);
+        });
+
+        sendButton.addEventListener('click',()=>{
+            const message=messageInput.value.trim();
+            if(message){
+                socket.emit('echo',message);
+                appendMessage(`You sent ${message}`,'sent');
+                messageInput.value="";
+            }
+        });
+
+        messageInput.addEventListener('keypress',(e)=>{
+            if(e.key==='Enter'){
+                sendButton.click();
+            }
+        });
+    </script>
+</body>
+</html>
