@@ -3,66 +3,197 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SocketLab: Echo Server</title>
+    <title>SocketLab: Chat Rooms</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 20px; }
-        #messages { border: 1px solid #ccc; padding: 10px; min-height: 150px; margin-bottom: 10px; overflow-y: scroll; }
-        input[type="text"] { width: 300px; padding: 8px; }
-        button { padding: 8px 15px; cursor: pointer; }
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f4;}
+        .container { max-width: 800px; margin: 0 auto; background-color: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        h1 { text-align: center; color: #333; }
+        .room-selection { margin-bottom: 20px; text-align: center; }
+        .room-selection button {
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 5px;
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+        }
+        .room-selection button:hover {
+            background-color: #0056b3;
+        }
+        .room-selection button.active {
+            background-color: #28a745;
+        }
+        #currentRoom { text-align: center; margin-bottom: 15px; font-weight: bold; color: #555; }
+        #messages {
+            border: 1px solid #ddd;
+            padding: 15px;
+            min-height: 300px;
+            max-height: 400px; /* Limit height for scroll */
+            overflow-y: auto; /* Enable scrolling */
+            margin-bottom: 15px;
+            border-radius: 5px;
+            background-color: #e9ecef;
+        }
+        .message-input-area { display: flex; }
+        input[type="text"] {
+            flex-grow: 1;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            margin-right: 10px;
+        }
+        button#sendButton {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        button#sendButton:hover {
+            background-color: #0056b3;
+        }
+        .message { margin-bottom: 8px; padding: 5px 10px; border-radius: 5px; }
+        .message.system { color: #888; font-style: italic; text-align: center; }
+        .message.me { text-align: right; background-color: #d1e7dd; } /* Light green for self */
+        .message.other { text-align: left; background-color: #f8d7da; } /* Light red for others */
+        .message .user { font-weight: bold; margin-bottom: 3px; }
+        .message .text { word-wrap: break-word; }
+
     </style>
 </head>
 <body>
-    <h1>Echo Server Demo</h1>
-    <div id="messages"></div>
-    <input type="text" id="messageInput" placeholder="Type a message...">
-    <button id="sendButton">Send</button>
+    <div class="container">
+        <h1>SocketLab: Chat Rooms</h1>
+
+        <div class="room-selection">
+            <p>Select a Room:</p>
+            <button id="joinRoom1">Join Room 1</button>
+            <button id="joinRoom2">Join Room 2</button>
+        </div>
+
+        <p id="currentRoom">Not in a room</p>
+
+        <div id="messages"></div>
+
+        <div class="message-input-area">
+            <input type="text" id="messageInput" placeholder="Type your message...">
+            <button id="sendButton">Send</button>
+        </div>
+    </div>
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
-        // Connect to the Socket.IO Server
-        const socket=io();
-        const messageInput=document.getElementById('messageInput');
-        const sendButton=document.getElementById('sendButton');
-        const messageDiv=document.getElementById('messages');
+        const socket = io(); // Connects to ws://localhost:3000
 
-        function appendMessage(message,type){
-            const p=document.createElement('p');
-            p.textContent=message;
-            let color=type==='sent'?'blue':'green';
-            p.style.color=color;
-            messageDiv.appendChild(p);
+        const messageInput = document.getElementById('messageInput');
+        const sendButton = document.getElementById('sendButton');
+        const messagesDiv = document.getElementById('messages');
+        const joinRoom1Btn = document.getElementById('joinRoom1');
+        const joinRoom2Btn = document.getElementById('joinRoom2');
+        const currentRoomDisplay = document.getElementById('currentRoom');
+
+        let currentRoom = null; // Client-side variable to track current room
+
+        // Helper function to append messages to the display area
+        function appendMessage(msgObj, type = 'system') {
+            const messageElement = document.createElement('div');
+            messageElement.classList.add('message');
+
+            if (type === 'system') {
+                messageElement.classList.add('system');
+                messageElement.textContent = msgObj.message;
+            } else {
+                const userElement = document.createElement('div');
+                userElement.classList.add('user');
+                userElement.textContent = msgObj.user === socket.id ? 'You' : msgObj.user;
+
+                const textElement = document.createElement('div');
+                textElement.classList.add('text');
+                textElement.textContent = msgObj.message;
+
+                messageElement.appendChild(userElement);
+                messageElement.appendChild(textElement);
+
+                // Add classes for styling based on sender
+                if (msgObj.user === socket.id) {
+                    messageElement.classList.add('me');
+                } else {
+                    messageElement.classList.add('other');
+                }
+            }
+            messagesDiv.appendChild(messageElement);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight; // Scroll to bottom
         }
 
-        socket.on('connect',()=>{
-            appendMessage('Connected to the Server','info');
-            console.log('Socket.IO connected ');
-        });
-        socket.on('disconnect',()=>{
-            appendMessage('Disconnected from Server','info');
-            console.log('Socket.IO disconnected ');
-            
-        });
-        socket.on('connect_error',(err)=>{
-            appendMessage(`Connection Error ${err.message}`,'error');
-            console.error('Socket.IO Error ',err);
+        // --- Socket.IO Event Listeners ---
+        socket.on('connect', () => {
+            appendMessage({ message: `Connected to server! Your ID: ${socket.id}` });
+            console.log('Socket.IO client connected!');
         });
 
-        socket.on('echo',(data)=>{
-            appendMessage(data,'received');
-            console.log("Received from Server",data);
-        });
-
-        sendButton.addEventListener('click',()=>{
-            const message=messageInput.value.trim();
-            if(message){
-                socket.emit('echo',message);
-                appendMessage(`You sent ${message}`,'sent');
-                messageInput.value="";
+        socket.on('chatMessage', (msgObj) => {
+            // Only display messages if they are for the current room or are system messages
+            // The server already ensures room-specific messages, but client-side filtering adds robustness
+            if (msgObj.room === currentRoom || msgObj.user === 'System') {
+                appendMessage(msgObj, 'chat');
+                console.log(`Received from server in room ${msgObj.room}:`, msgObj.message);
             }
         });
 
-        messageInput.addEventListener('keypress',(e)=>{
-            if(e.key==='Enter'){
+        socket.on('disconnect', () => {
+            appendMessage({ message: 'Disconnected from server.' });
+            console.log('Socket.IO client disconnected.');
+            currentRoomDisplay.textContent = 'Not in a room';
+            currentRoom = null;
+            // Deactivate all room buttons
+            document.querySelectorAll('.room-selection button').forEach(btn => btn.classList.remove('active'));
+        });
+
+        socket.on('connect_error', (err) => {
+            appendMessage({ message: `Connection Error: ${err.message}` });
+            console.error('Connection Error:', err);
+        });
+
+        // --- UI Event Handlers ---
+        function joinRoom(roomName) {
+            // Clear messages when changing rooms
+            messagesDiv.innerHTML = '';
+            currentRoom = roomName; // Update client-side tracking
+            currentRoomDisplay.textContent = `Current Room: ${roomName}`;
+            socket.emit('joinRoom', roomName); // Tell the server to join this room
+
+            // Update active button styling
+            document.querySelectorAll('.room-selection button').forEach(btn => btn.classList.remove('active'));
+            if (roomName === 'Room1') {
+                joinRoom1Btn.classList.add('active');
+            } else if (roomName === 'Room2') {
+                joinRoom2Btn.classList.add('active');
+            }
+        }
+
+        joinRoom1Btn.addEventListener('click', () => joinRoom('Room1'));
+        joinRoom2Btn.addEventListener('click', () => joinRoom('Room2'));
+
+        sendButton.addEventListener('click', () => {
+            const message = messageInput.value.trim();
+            if (message && currentRoom) { // Only send if message exists and user is in a room
+                // Emit a custom event named 'chatMessage' to the server
+                socket.emit('chatMessage', message);
+                // No need to append 'You sent' immediately; the server will echo it back to the room
+                // appendMessage({ user: socket.id, message: message, room: currentRoom }, 'chat');
+                messageInput.value = ''; // Clear input field
+            } else if (!currentRoom) {
+                appendMessage({ message: 'Please select a room to send messages!' });
+            }
+        });
+
+        messageInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
                 sendButton.click();
             }
         });
