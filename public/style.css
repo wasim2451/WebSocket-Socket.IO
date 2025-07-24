@@ -1,0 +1,175 @@
+@import url('https://fonts.googleapis.com/css2?family=Google+Sans+Code:ital,wght@0,300..800;1,300..800&display=swap');
+
+* {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  padding: 10px;
+}
+
+/* Headings and labels */
+h2 {
+  text-align: center;
+  font-weight: 800;
+}
+h3 {
+  text-align: center;
+  margin-top: 5px;
+  margin-bottom: 5px;
+}
+label {
+  font-weight: 500;
+  color: rebeccapurple;
+}
+button {
+  padding: 8px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+/* Layout */
+.name-div {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+.room-btn {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+#inputName {
+  height: 30px;
+  text-align: center;
+  font-weight: 600;
+  font-size: 15px;
+  margin-top: 10px;
+}
+#inputSubmitBtn {
+  padding: 5px;
+  font-size: 14px;
+  margin-top: 10px;
+}
+hr {
+  width: 50%;
+  margin: 10px auto;
+}
+#selectedRoom, #nameWarning {
+  text-align: center;
+  font-style: italic;
+}
+#selectedRoom{
+    display: none;
+}
+#nameWarning {
+  font-weight: 600;
+  color: red;
+}
+.connected-users{
+    text-align: center;
+    font-size: 14px;
+    /* font-style: italic; */
+}
+#totalUsers{
+    font-weight: 600;
+}
+
+/* Chat Message Area */
+.messageDiv {
+  margin-top: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0 10px;
+}
+#messageArea {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 10px;
+  height: 400px;
+  width: 100%;
+  max-width: 600px;
+  border: 1px solid black;
+  padding: 15px;
+  font-family: "Google Sans Code", monospace;
+  font-weight: 500;
+  font-size: 14px;
+  background-color: #f9f9f9;
+  overflow: hidden;
+}
+
+/* Message styling */
+.system {
+  display: block;
+  padding: 5px;
+  color: green;
+  text-align: center;
+}
+.server {
+  margin-top: 8px;
+  background-color: hsl(39, 100%, 85%);
+  padding: 8px;
+  display: block;
+}
+.user {
+  margin-top: 8px;
+  background-color: hsl(240, 100%, 90%);
+  padding: 8px;
+  text-align: right;
+  display: block;
+}
+
+/* Input Wrapper */
+.messageInputWrapper {
+  display: flex;
+  gap: 10px;
+  margin-top: auto;
+  padding-top: 10px;
+  border-top: 1px solid #aaa;
+  flex-shrink: 0;
+}
+#messageInput {
+  flex: 1;
+  padding: 15px;
+  font-size: 14px;
+  border: 1px solid black;
+  border-radius: 4px;
+}
+#messageSentBtn {
+  padding: 10px 15px;
+  font-size: 14px;
+}
+
+/* Scrollable message area (optional improvement) */
+#messageArea > span {
+  overflow-y: auto;
+}
+
+/* Responsive Adjustments */
+@media screen and (max-width: 600px) {
+  #messageArea {
+    height: 300px;
+    padding: 8px;
+    font-size: 13px;
+  }
+
+  #messageInput {
+    font-size: 13px;
+    padding: 8px;
+  }
+
+  #messageSentBtn {
+    font-size: 13px;
+    padding: 8px 12px;
+  }
+}
