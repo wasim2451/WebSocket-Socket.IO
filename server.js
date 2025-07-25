@@ -7,6 +7,7 @@ const io = new Server(server);
 const PORT = process.env.PORT || 3000;
 app.use(express.static('public'));
 const usersInRoom = {};
+const now = new Date();
 io.on('connection', (socket) => {
     console.log(`User Connected : ${socket.id}`);
     console.log("Total connected users:", io.engine.clientsCount);
@@ -36,7 +37,7 @@ io.on('connection', (socket) => {
             console.log(`Message in ${currentUser.room} from ${name} : ${message}`);
             io.to(currentUser.room).emit('chat', {
                 user: 'server',
-                message: `<b>${name}</b> - ${message}`,
+                message: `<b>${name}</b> - ${message} <p><span>${now.toLocaleString()}</span></p>`,
                 id:socket.id
             });
         } else {
